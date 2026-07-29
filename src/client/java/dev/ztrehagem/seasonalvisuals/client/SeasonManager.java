@@ -1,30 +1,43 @@
 package dev.ztrehagem.seasonalvisuals.client;
 
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 
 public class SeasonManager {
 
-    public enum Season {
-        SPRING, SUMMER, AUTUMN, WINTER
+    public static final long SEASON_LENGTH_TICKS = 24000L * 7; // テスト用に7日間に設定
+    private static Season currentSeason = Season.SPRING;
+
+    /**
+     * ティック毎に季節の状態を更新します。
+     * @return 季節が変更された場合は true
+     */
+    public static boolean updateSeason(ClientLevel level) {
+        if (level == null) return false;
+        Season newSeason = Season.fromTick(level.getOverworldClockTime(), SEASON_LENGTH_TICKS);
+        if (currentSeason != newSeason) {
+            currentSeason = newSeason;
+            return true;
+        }
+        return false;
     }
 
-    // 1季節あたりの日数（例: 28日 = 672,000 ティック）
-    private static final long SEASON_LENGTH_TICKS = 24000L * 7; // テスト用に7日間に設定
-
+    /**
+     * キャッシュされた現在の季節を取得します（描画処理向けに高速）。
+     */
     public static Season getCurrentSeason() {
-        Minecraft client = Minecraft.getInstance();
-        if (client.level == null) return Season.SPRING;
+        return currentSeason;
+    }
 
-        // ワールドの総経過時間から現在の季節を算出
-        long time = client.level.getOverworldClockTime();
-        long cycle = (time / SEASON_LENGTH_TICKS) % 4;
-
-        switch ((int) cycle) {
-            case 0: return Season.SPRING;
-            case 1: return Season.SUMMER;
-            case 2: return Season.AUTUMN;
-            case 3: return Season.WINTER;
-            default: return Season.SPRING;
-        }
+    /**
+     * 季節に応じた葉の色を取得します。
+     */
+    public static int getFoliageColor(Season season, int originalColor) {
+        return switch (season) {
+            case AUTUMN -> 0xD35400; // 紅葉カラー
+            case WINTER -> 0x808070; // 枯れ木・雪カラー
+            default -> originalColor;
+        };
     }
 }
+
+
