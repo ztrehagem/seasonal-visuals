@@ -62,6 +62,34 @@ public class SeasonManager {
     }
 
     /**
+     * 季節に応じた草の色を取得します。
+     * バイオームの特性（常緑、サバンナの乾季/雨季など）に応じた色補正を行います。
+     */
+    public static int getGrassColor(Biome biome, Season season, int originalColor) {
+        // 常緑バイオーム（ジャングル、マングローブ）は季節変化なし
+        if (isEvergreenBiome(biome)) {
+            return originalColor;
+        }
+
+        // サバンナバイオーム（雨季・乾季表現）
+        if (isSavannaBiome(biome)) {
+            return switch (season) {
+                case SPRING -> originalColor;
+                case SUMMER -> applySummerGrassTint(originalColor);
+                case AUTUMN, WINTER -> applyDrySeasonTint(originalColor);
+            };
+        }
+
+        // 通常の季節変化バイオーム
+        return switch (season) {
+            case SPRING -> originalColor; // 春：デフォルト
+            case SUMMER -> applySummerGrassTint(originalColor); // 夏：青々とした深みのある緑
+            case AUTUMN -> applyAutumnGrassTint(originalColor); // 秋：美しい黄金色・草原の秋色
+            case WINTER -> applyWinterGrassTint(originalColor); // 冬：枯れ草色のシックな色合い
+        };
+    }
+
+    /**
      * 常緑バイオーム（ジャングル・マングローブ等）かどうかを判定します。
      */
     public static boolean isEvergreenBiome(Biome biome) {
@@ -170,6 +198,56 @@ public class SeasonManager {
         int newR = (int) (r * 0.35 + gray * 0.55);
         int newG = (int) (g * 0.35 + gray * 0.55);
         int newB = (int) (b * 0.35 + gray * 0.60);
+
+        return (clamp(newR) << 16) | (clamp(newG) << 8) | clamp(newB);
+    }
+
+    /**
+     * 草の夏のカラー補正：青々と引き締まった力強い深緑
+     */
+    private static int applySummerGrassTint(int color) {
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+
+        int newR = (int) (r * 0.75);
+        int newG = (int) (g * 0.96);
+        int newB = (int) (b * 0.70);
+
+        return (clamp(newR) << 16) | (clamp(newG) << 8) | clamp(newB);
+    }
+
+    /**
+     * 草の秋のカラー補正：黄金色〜アンバー風の秋の草原色
+     */
+    private static int applyAutumnGrassTint(int color) {
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+
+        double luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
+        double factor = Math.min(1.0, luminance * 1.5);
+
+        int newR = (int) (205 * factor);
+        int newG = (int) (155 * factor);
+        int newB = (int) (45 * factor);
+
+        return (clamp(newR) << 16) | (clamp(newG) << 8) | clamp(newB);
+    }
+
+    /**
+     * 草の冬のカラー補正：彩度を大きく落としたグレーベージュの枯れ草色
+     */
+    private static int applyWinterGrassTint(int color) {
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = color & 0xFF;
+
+        int gray = (int) (0.299 * r + 0.587 * g + 0.114 * b);
+
+        int newR = (int) (r * 0.40 + gray * 0.50);
+        int newG = (int) (g * 0.40 + gray * 0.48);
+        int newB = (int) (b * 0.35 + gray * 0.45);
 
         return (clamp(newR) << 16) | (clamp(newG) << 8) | clamp(newB);
     }

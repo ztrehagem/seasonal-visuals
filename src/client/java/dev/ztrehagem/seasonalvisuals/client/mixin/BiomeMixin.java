@@ -23,5 +23,17 @@ public class BiomeMixin {
 			cir.setReturnValue(newColor);
 		}
 	}
+
+	// 草（Grass）の色計算に介入
+	@Inject(method = "getGrassColor", at = @At("RETURN"), cancellable = true)
+	private void modifyGrassColor(double posX, double posZ, CallbackInfoReturnable<Integer> cir) {
+		Season season = SeasonManager.getCurrentSeason();
+		int originalColor = cir.getReturnValue();
+		int newColor = SeasonManager.getGrassColor((Biome) (Object) this, season, originalColor);
+
+		if (newColor != originalColor) {
+			cir.setReturnValue(newColor);
+		}
+	}
 }
 
