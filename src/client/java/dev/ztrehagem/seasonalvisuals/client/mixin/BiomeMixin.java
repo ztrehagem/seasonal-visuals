@@ -17,7 +17,7 @@ public class BiomeMixin {
 	private void modifyFoliageColor(CallbackInfoReturnable<Integer> cir) {
 		Season season = SeasonManager.getCurrentSeason();
 		int originalColor = cir.getReturnValue();
-		int newColor = SeasonManager.getFoliageColor(season, originalColor);
+		int newColor = SeasonManager.getFoliageColor((Biome) (Object) this, season, originalColor);
 
 		if (newColor != originalColor) {
 			cir.setReturnValue(newColor);
